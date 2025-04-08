@@ -2,6 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from scipy.linalg import eigh
+import scipy.io as sio
+
+def load_data():
+    data = sio.loadmat('data/data/Indian_pines_NS_data.mat')
+    gt_data = sio.loadmat('data/gt/Indian_pines_NS_gt.mat')
+    return data,gt_data
 
 class MNFTransform:
     def __init__(self, num_components=None):
