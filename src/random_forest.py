@@ -37,7 +37,11 @@ def load_data(dataset):
     h, w, p = hyper_image.shape
     X = hyper_image.reshape(-1, p)  # (liczba_pikseli, liczba_pasm)
     y = ground_truth.ravel()  # (liczba_pikseli,)
-    return X, y, h, w, ground_truth
+    mask = (y != 0).astype(int)  # maska z 0 i 1
+    X_filtered = X[mask == 1]  # zachowujemy tylko elementy, gdzie y != 0
+    y_filtered = y[mask == 1]
+
+    return X_filtered, y_filtered, h, w, ground_truth, mask
 
 def evaluation(y_test, y_pred, predicted_labels, y, class_colors, class_labels):
     # Calculate accuracy and classification report
@@ -94,11 +98,10 @@ def generate_image(class_colors, ground_truth, predicted_labels_image, class_lab
     fig.legend(handles=patches, loc='lower center', ncol=4, bbox_to_anchor=(0.5, -0.05))
 
     plt.tight_layout()
-    plt.show()
 
 
 def main():
-    X, y, h, w, ground_truth = load_data("Indian_pines")
+    X, y, h, w, ground_truth, mask = load_data("Indian_pines")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.8, random_state=42)
     # p = 20
 
@@ -144,12 +147,45 @@ def main():
 
     # Przewidywanie klasyfikacji dla całego obrazu
     predicted_labels = rf_classifier.predict(X)
-
+    y_reconstructed = np.zeros_like(mask)        # utwórz nową tablicę zer
+    y_reconstructed[mask == 1] = predicted_labels 
     # Przekształcenie wyników do oryginalnych wymiarów obrazu
-    predicted_labels_image = predicted_labels.reshape(h, w)
+    predicted_labels_image = y_reconstructed.reshape(h, w)
 
     clr_path = r'data\gt\19920612_AVIRIS_IndianPine_Site3_gr.clr'
     class_colors, class_labels = load_clr(clr_path)
-    evaluation(y_test, y_pred, predicted_labels, y, class_colors, class_labels)
     generate_image(class_colors, ground_truth, predicted_labels_image, class_labels)
+
+    del class_labels[0]
+    del class_colors[0]
+
+    evaluation(y_test, y_pred, predicted_labels, y, class_colors, class_labels)
+
+    plt.figure(figsize=(12, 6))
+    
+    for label in class_labels:
+        X_class = X[y == label]
+        mean_spectrum = X_class.mean(axis=0)
+        std_spectrum = X_class.std(axis=0)
+
+        # Normalizacja koloru RGB 0–255 -> 0–1
+        color = np.array(class_colors[label])
+        nazwa = class_labels[label]
+
+        plt.plot(mean_spectrum, color=color, label=f'{nazwa} (klasa {label})')
+        plt.fill_between(
+            np.arange(X.shape[1]),
+            mean_spectrum - std_spectrum,
+            mean_spectrum + std_spectrum,
+            color=color,
+            alpha=0.3
+        )
+
+    plt.xlabel('Numer kanału')
+    plt.ylabel('Wartość piksela')
+    plt.title('Średnie spektrum z odchyleniem standardowym dla każdej klasy')
+    plt.legend(loc='upper right', fontsize='small')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
 main()
