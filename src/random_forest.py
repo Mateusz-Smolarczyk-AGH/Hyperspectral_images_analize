@@ -28,7 +28,7 @@ def load_clr(filepath):
             class_labels[class_id] = name
     return class_colors, class_labels
 
-def load_data(dataset, keep_background=False):
+def load_data(dataset):
     data = sio.loadmat('data/data/' + dataset +'_data.mat')
     gt_data = sio.loadmat('data/gt/' + dataset + '_gt.mat')
 
@@ -37,13 +37,7 @@ def load_data(dataset, keep_background=False):
     h, w, p = hyper_image.shape
     X = hyper_image.reshape(-1, p)  # (liczba_pikseli, liczba_pasm)
     y = ground_truth.ravel()  # (liczba_pikseli,)
-    if keep_background:
-        return X, y, h, w, ground_truth, np.ones_like(y, dtype=int)
-
-    mask = (y != 0).astype(int)  # maska z 0 i 1
-    X_filtered = X[mask == 1]  # zachowujemy tylko elementy, gdzie y != 0
-    y_filtered = y[mask == 1]
-    return X_filtered, y_filtered, h, w, ground_truth, mask
+    return X, y, h, w, ground_truth
 
 def evaluation_custom(y_test, y_pred, class_colors, class_labels):
     # Calculate accuracy and classification report
@@ -108,6 +102,8 @@ def generate_image_custom(class_colors, ground_truth, predicted_labels_image, cl
     # Tworzymy niestandardową colormapę
     custom_cmap = ListedColormap(clr_colors_list)
 
+    custom_cmap1 = ListedColormap(clr_colors_list[1:])
+
     # Rysowanie z poprawną colormapą
     fig, axes = plt.subplots(1, 2, figsize=(16, 10))
 
@@ -115,7 +111,7 @@ def generate_image_custom(class_colors, ground_truth, predicted_labels_image, cl
     axes[0].set_title('Rzeczywista mapa klas (Ground Truth)')
     axes[0].axis('off')
 
-    axes[1].imshow(predicted_labels_image, cmap=custom_cmap)
+    axes[1].imshow(predicted_labels_image, cmap=custom_cmap1)
     axes[1].set_title('Przewidywana mapa klas')
     axes[1].axis('off')
 
@@ -138,16 +134,21 @@ def generate_image(ground_truth, predicted_labels_image):
 
     plt.tight_layout()
 
-def main(test_size, data_path, gt_names=None, keep_background=False):
-    X, y, h, w, ground_truth, mask = load_data(data_path, keep_background)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
+def main(test_size, data_path, gt_names=None):
+    X, y, h, w, ground_truth = load_data(data_path)
+    mask = (y != 0).astype(int)         # Maska: True dla wszystkich klas oprócz 0 (tło)
+    X_for_model = X[mask == 1]  # zachowujemy tylko elementy, gdzie y != 0
+    y_for_model = y[mask == 1]
+    X_train, X_test, y_train, y_test = train_test_split(X_for_model, y_for_model, test_size=test_size, random_state=42)
 
+    #Testy wykazały, że PCA pogarsza wynik
     # pca = PCA(n_components=0.95)
     # X_train = pca.fit_transform(X_train)
     # X_test = pca.transform(X_test)
     # X = pca.transform(X)
     # print(f"pca: {pca.n_components_}")
 
+    #Parametry dobrane z wykorzystaniem GridSearchCV 
     best_rf = RandomForestClassifier(
         ccp_alpha=0.000102,
         max_depth=None,
@@ -164,16 +165,13 @@ def main(test_size, data_path, gt_names=None, keep_background=False):
 
     # Przewidywanie klasyfikacji dla całego obrazu
     predicted_labels = best_rf.predict(X)
-    y_reconstructed = np.zeros_like(mask)        # utwórz nową tablicę zer
-    y_reconstructed[mask == 1] = predicted_labels 
     # Przekształcenie wyników do oryginalnych wymiarów obrazu
-    predicted_labels_image = y_reconstructed.reshape(h, w)
+    predicted_labels_image = predicted_labels.reshape(h, w)
     if gt_names is not None:
         class_colors, class_labels = load_clr(gt_names)
         generate_image_custom(class_colors, ground_truth, predicted_labels_image, class_labels)
-        if not keep_background:
-            del class_labels[0]
-            del class_colors[0]
+        del class_labels[0]
+        del class_colors[0]
 
         evaluation_custom(y_test, y_pred, class_colors, class_labels)
 
@@ -238,4 +236,4 @@ def main(test_size, data_path, gt_names=None, keep_background=False):
         plt.tight_layout()
         plt.show()
 #main("Pavia", r'data\gt\19920612_AVIRIS_IndianPine_Site3_gr.clr')
-main(0.7, "Pavia", "data//gt//Pavia_names.clr", keep_background=True)
+main(0.7, "PaviaU", "data//gt//PaviaU_names.clr")

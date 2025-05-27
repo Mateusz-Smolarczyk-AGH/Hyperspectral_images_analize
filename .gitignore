@@ -1,1 +1,6 @@
-/data/
+data/data/*
+data/gt/*
+
+!data/data/PaviaU_data.mat
+!data/gt/PaviaU_gt.mat
+!data/gt/PaviaU_names.clr
