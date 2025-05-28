@@ -1,10 +1,10 @@
 0 255 255 255 n:Background~
-1  86 180 233 n:Asphalt~
+1  76  76  76 n:Asphalt~
 2   0 200  70 n:Meadows~
 3   0 114 189 n:Gravel~
 4   0 158 115 n:Trees~
-5 213  94   0 n:Metalsheet~
+5  86 180 233 n:Metalsheet~
 6 230 159   0 n:Bare Soil~
 7 204 121 167 n:Bitumen~
-8   0  70 200 n:Bricks~
+8 213  94   0 n:Bricks~
 9 153 153 153 n:Shadows~

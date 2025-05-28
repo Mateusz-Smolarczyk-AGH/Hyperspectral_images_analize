@@ -24,7 +24,7 @@ def load_clr(filepath):
             class_id = int(parts[0])
             r, g, b = map(int, parts[1:4])
             name = parts[4].split(':')[1].replace('~', '')
-            class_colors[class_id] = (r/255, g/255, b/255)  # Normalizujemy RGB do 0-1
+            class_colors[class_id] = (r/255, g/255, b/255)
             class_labels[class_id] = name
     return class_colors, class_labels
 
@@ -32,12 +32,27 @@ def load_data(dataset):
     data = sio.loadmat('data/data/' + dataset +'_data.mat')
     gt_data = sio.loadmat('data/gt/' + dataset + '_gt.mat')
 
-    hyper_image = data[list(data.keys())[-1]]  # Zakładam, że ostatni klucz to dane
-    ground_truth = gt_data[list(gt_data.keys())[-1]]  # Zakładam, że ostatni klucz to ground truth
+    hyper_image = data[list(data.keys())[-1]]
+    ground_truth = gt_data[list(gt_data.keys())[-1]] 
+
+    # Stworzenie RGB
+    r = hyper_image[:, :, 55]
+    g = hyper_image[:, :, 30]
+    b = hyper_image[:, :, 10]
+
+    def normalize_channel(channel):
+        return (channel - channel.min()) / (channel.max() - channel.min() + 1e-8)
+
+    r_norm = normalize_channel(r)
+    g_norm = normalize_channel(g)
+    b_norm = normalize_channel(b)
+
+    rgb_image = np.stack([r_norm, g_norm, b_norm], axis=-1)
+
     h, w, p = hyper_image.shape
-    X = hyper_image.reshape(-1, p)  # (liczba_pikseli, liczba_pasm)
-    y = ground_truth.ravel()  # (liczba_pikseli,)
-    return X, y, h, w, ground_truth
+    X = hyper_image.reshape(-1, p)
+    y = ground_truth.ravel() 
+    return X, y, h, w, ground_truth, rgb_image
 
 def evaluation_custom(y_test, y_pred, class_colors, class_labels):
     # Calculate accuracy and classification report
@@ -95,17 +110,14 @@ def evaluation(y_test, y_pred, predicted_labels, y):
 
     plt.tight_layout()
 
-def generate_image_custom(class_colors, ground_truth, predicted_labels_image, class_labels):
-    # Rysujemy obrazki z legendą
+def generate_image_custom(class_colors, ground_truth, predicted_labels_image, class_labels, image):
     clr_colors_list = [class_colors[i] for i in sorted(class_colors)]
 
-    # Tworzymy niestandardową colormapę
     custom_cmap = ListedColormap(clr_colors_list)
 
     custom_cmap1 = ListedColormap(clr_colors_list[1:])
 
-    # Rysowanie z poprawną colormapą
-    fig, axes = plt.subplots(1, 2, figsize=(16, 10))
+    fig, axes = plt.subplots(1, 3, figsize=(16, 10))
 
     axes[0].imshow(ground_truth, cmap=custom_cmap)
     axes[0].set_title('Rzeczywista mapa klas (Ground Truth)')
@@ -115,9 +127,12 @@ def generate_image_custom(class_colors, ground_truth, predicted_labels_image, cl
     axes[1].set_title('Przewidywana mapa klas')
     axes[1].axis('off')
 
-    # Dodanie legendy jak wcześniej
+    axes[2].imshow(image)
+    axes[2].set_title('Oraz RGB')
+    axes[2].axis('off')
+
     patches = [mpatches.Patch(color=class_colors[i], label=class_labels[i]) for i in sorted(class_labels)]
-    fig.legend(handles=patches, loc='lower center', ncol=4, bbox_to_anchor=(0.5, -0.05))
+    fig.legend(handles=patches, loc='upper right')
 
     plt.tight_layout()
 
@@ -135,7 +150,7 @@ def generate_image(ground_truth, predicted_labels_image):
     plt.tight_layout()
 
 def main(test_size, data_path, gt_names=None):
-    X, y, h, w, ground_truth = load_data(data_path)
+    X, y, h, w, ground_truth, image = load_data(data_path)
     mask = (y != 0).astype(int)         # Maska: True dla wszystkich klas oprócz 0 (tło)
     X_for_model = X[mask == 1]  # zachowujemy tylko elementy, gdzie y != 0
     y_for_model = y[mask == 1]
@@ -169,7 +184,7 @@ def main(test_size, data_path, gt_names=None):
     predicted_labels_image = predicted_labels.reshape(h, w)
     if gt_names is not None:
         class_colors, class_labels = load_clr(gt_names)
-        generate_image_custom(class_colors, ground_truth, predicted_labels_image, class_labels)
+        generate_image_custom(class_colors, ground_truth, predicted_labels_image, class_labels, image)
         del class_labels[0]
         del class_colors[0]
 
