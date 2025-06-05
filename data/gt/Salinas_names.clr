@@ -1,0 +1,17 @@
+0 255 255 255 n:Background~
+1 128   0   0 n:Brocoli_green_weeds_1~
+2 255   0   0 n:Brocoli_green_weeds_2~
+3 255 128   0 n:Fallow~
+4 255 255   0 n:Fallow_rough_plow~
+5 128 255   0 n:Fallow_smooth~
+6   0 255   0 n:Stubble~
+7   0 255 128 n:Celery~
+8   0 255 255 n:Grapes_untrained~
+9   0 128 255 n:Soil_vinyard_develop~
+10  0   0 255 n:Corn_senesced_green_weeds~
+11 128   0 255 n:Lettuce_romaine_4wk~
+12 255   0 255 n:Lettuce_romaine_5wk~
+13 255 128 255 n:Lettuce_romaine_6wk~
+14 128 128 255 n:Lettuce_romaine_7wk~
+15  64  64  64 n:Vinyard_untrained~
+16 160 160 160 n:Vinyard_vertical_trellis~

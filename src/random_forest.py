@@ -34,11 +34,14 @@ def load_data(dataset):
 
     hyper_image = data[list(data.keys())[-1]]
     ground_truth = gt_data[list(gt_data.keys())[-1]] 
-
+    
     # Stworzenie RGB
-    r = hyper_image[:, :, 55]
-    g = hyper_image[:, :, 30]
-    b = hyper_image[:, :, 10]
+    # r = hyper_image[:, :, 55]
+    # g = hyper_image[:, :, 30]
+    # b = hyper_image[:, :, 10]
+    r = hyper_image[:, :, 28]
+    g = hyper_image[:, :, 17]
+    b = hyper_image[:, :, 6]
 
     def normalize_channel(channel):
         return (channel - channel.min()) / (channel.max() - channel.min() + 1e-8)
@@ -50,6 +53,7 @@ def load_data(dataset):
     rgb_image = np.stack([r_norm, g_norm, b_norm], axis=-1)
 
     h, w, p = hyper_image.shape
+
     X = hyper_image.reshape(-1, p)
     y = ground_truth.ravel() 
     return X, y, h, w, ground_truth, rgb_image
@@ -134,7 +138,7 @@ def generate_image_custom(class_colors, ground_truth, predicted_labels_image, cl
     patches = [mpatches.Patch(color=class_colors[i], label=class_labels[i]) for i in sorted(class_labels)]
     fig.legend(handles=patches, loc='upper right')
 
-    plt.tight_layout()
+    # plt.tight_layout()
 
 def generate_image(ground_truth, predicted_labels_image):
     fig, axes = plt.subplots(1, 2, figsize=(14, 7))
@@ -156,7 +160,7 @@ def main(test_size, data_path, gt_names=None):
     y_for_model = y[mask == 1]
     X_train, X_test, y_train, y_test = train_test_split(X_for_model, y_for_model, test_size=test_size, random_state=42)
 
-    #Testy wykazały, że PCA pogarsza wynik
+    # Testy wykazały, że PCA pogarsza wynik
     # pca = PCA(n_components=0.95)
     # X_train = pca.fit_transform(X_train)
     # X_test = pca.transform(X_test)
@@ -190,19 +194,51 @@ def main(test_size, data_path, gt_names=None):
 
         evaluation_custom(y_test, y_pred, class_colors, class_labels)
 
-        plt.figure(figsize=(12, 6))
-        class_colors[0] = np.array([0.8, 0.8, 0.8])
+        # plt.figure(figsize=(12, 6))
+        # class_colors[0] = np.array([0.8, 0.8, 0.8])
 
+        # for label in class_labels:
+        #     X_class = X[y == label]
+        #     mean_spectrum = X_class.mean(axis=0)
+        #     std_spectrum = X_class.std(axis=0)
+
+        #     color = np.array(class_colors[label])
+        #     nazwa = class_labels[label]
+
+        #     plt.plot(mean_spectrum, color=color, label=f'{nazwa} (klasa {label})')
+        #     plt.fill_between(
+        #         np.arange(X.shape[1]),
+        #         mean_spectrum - std_spectrum,
+        #         mean_spectrum + std_spectrum,
+        #         color=color,
+        #         alpha=0.3
+        #     )
+
+        # plt.xlabel('Numer kanału')
+        # plt.ylabel('Wartość piksela')
+        # plt.title('Średnie spektrum z odchyleniem standardowym dla każdej klasy')
+        # plt.legend(loc='upper right', fontsize='small')
+        # plt.grid(True)
+        # plt.tight_layout()
+
+        # plt.figure(figsize=(12, 6))
+
+        importances = best_rf.feature_importances_
+        # plt.plot(importances)
+        # plt.show()
+        fig, ax1 = plt.subplots(figsize=(12, 6))
+
+        # wykres spektralny
+        class_colors[0] = np.array([0.8, 0.8, 0.8])
         for label in class_labels:
             X_class = X[y == label]
             mean_spectrum = X_class.mean(axis=0)
             std_spectrum = X_class.std(axis=0)
-
             color = np.array(class_colors[label])
             nazwa = class_labels[label]
-
-            plt.plot(mean_spectrum, color=color, label=f'{nazwa} (klasa {label})')
-            plt.fill_between(
+            
+            ax1.plot(mean_spectrum, color=color, label=f'{nazwa} (klasa {label})')
+            ax1.fill_between(
                 np.arange(X.shape[1]),
                 mean_spectrum - std_spectrum,
                 mean_spectrum + std_spectrum,
@@ -210,18 +246,26 @@ def main(test_size, data_path, gt_names=None):
                 alpha=0.3
             )
 
-        plt.xlabel('Numer kanału')
-        plt.ylabel('Wartość piksela')
-        plt.title('Średnie spektrum z odchyleniem standardowym dla każdej klasy')
-        plt.legend(loc='upper right', fontsize='small')
-        plt.grid(True)
+        ax1.set_xlabel('Numer kanału')
+        ax1.set_ylabel('Wartość piksela')
+        ax1.set_title('Średnie spektra klas z nakładaną istotnością cech')
+        ax1.grid(True)
+
+        # druga oś Y dla istotności cech
+        ax2 = ax1.twinx()
+        ax2.plot(importances, color='black', linestyle='--', linewidth=2, label='Ważność cech (Random Forest)')
+        ax2.set_ylabel('Ważność cechy', color='black')
+        ax2.tick_params(axis='y', labelcolor='black')
+
+        # wspólna legenda
+        lines1, labels1 = ax1.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right', fontsize='small')
+
         plt.tight_layout()
-
-        plt.figure(figsize=(12, 6))
-
-        importances = best_rf.feature_importances_
-        plt.plot(importances)
         plt.show()
+    
+    
     else:
         generate_image(ground_truth, predicted_labels_image)
 
@@ -251,4 +295,4 @@ def main(test_size, data_path, gt_names=None):
         plt.tight_layout()
         plt.show()
 #main("Pavia", r'data\gt\19920612_AVIRIS_IndianPine_Site3_gr.clr')
-main(0.7, "PaviaU", "data//gt//PaviaU_names.clr")
+main(0.7, "Indian_Pines", "data//gt//19920612_AVIRIS_IndianPine_Site3_gr.clr")

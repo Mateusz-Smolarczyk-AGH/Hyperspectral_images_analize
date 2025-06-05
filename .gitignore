@@ -1,6 +1,7 @@
-data/data/*
-data/gt/*
+data/data/Indian_pines_NS_data.mat
+data/data/Lublin2_wycinek.mat
+data/data/Pavia_data.mat
 
-!data/data/PaviaU_data.mat
-!data/gt/PaviaU_gt.mat
-!data/gt/PaviaU_names.clr
+data/gt/19920612_AVIRIS_IndianPine_NS-line_gr.clr
+data/gt/Indian_pines_NS_gt.mat
+
