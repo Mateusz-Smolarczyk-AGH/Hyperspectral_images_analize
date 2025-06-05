@@ -1,6 +1,6 @@
 # Analiza obrazów hiperspektralnych z wykorzystaniem lasów losowych
 
-Projekt dotyczy segmentacji obrazów hiperspektralnych przy użyciu algorytmu lasu losowego (*Random Forest*). Do eksperymentów wykorzystano popularne bazy danych: **Pavia Centre** oraz **Pavia University**.
+Projekt dotyczy segmentacji obrazów hiperspektralnych przy użyciu algorytmu lasu losowego (*Random Forest*). Do eksperymentów wykorzystano popularne bazy danych: **Pavia Centre**, **Pavia University** **Indian Pines** oraz **Salinas**.
 
 ## Opis metody
 
@@ -14,7 +14,8 @@ Dla obu baz danych osiągnięto wysoką dokładność klasyfikacji:
 
 - **Pavia Centre**: Accuracy = **98.42%**
 - **Pavia University**: Accuracy = **91.53%**
-
+- **Indian Pines**: Accuracy = **82,2%**
+- **Salinas**: Accuracy = **92,44%**
 Macierze pomyłek (confusion matrices) dla każdego przypadku znajdują się w folderze [`/results`](./results) i prezentują szczegółowe wyniki dla zbioru testowego.
 
 Dodatkowo, po wytrenowaniu modelu dokonano predykcji całego obrazu. Dzięki pominięciu klasy tła w procesie uczenia, każdy piksel został przypisany do jednej z rzeczywistych klas, co skutkuje spójną i kompletną segmentacją obrazu. Taki zabieg znacząco poprawia jakość końcowego wyniku w porównaniu do klasyfikacji uwzględniającej tło.
