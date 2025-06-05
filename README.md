@@ -16,6 +16,7 @@ Dla obu baz danych osiągnięto wysoką dokładność klasyfikacji:
 - **Pavia University**: Accuracy = **91.53%**
 - **Indian Pines**: Accuracy = **82,2%**
 - **Salinas**: Accuracy = **92,44%**
+  
 Macierze pomyłek (confusion matrices) dla każdego przypadku znajdują się w folderze [`/results`](./results) i prezentują szczegółowe wyniki dla zbioru testowego.
 
 Dodatkowo, po wytrenowaniu modelu dokonano predykcji całego obrazu. Dzięki pominięciu klasy tła w procesie uczenia, każdy piksel został przypisany do jednej z rzeczywistych klas, co skutkuje spójną i kompletną segmentacją obrazu. Taki zabieg znacząco poprawia jakość końcowego wyniku w porównaniu do klasyfikacji uwzględniającej tło.
